@@ -1,0 +1,50 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/awazone_project
+    username: ralph
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 20MB
+
+
+
+  mail:
+    host: localhost
+    port: 1025
+    username: hello
+    password: hello
+    properties:
+      mail:
+        smtp:
+          ssl:
+            trust: "*"
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+
+application:
+  jwt:
+    secreteKey: i have come to the point where i finally need to take this hard decision and today, I temporally left my 3+ years old relationship...this is really sad and I can't believe it actually happened
+    accessTokenPrefix: Bearer_
+    refreshTokenPrefix: Refresh_
+    tokenExpirationAfter: 1
+
+file:
+  upload-dir: src/main/resources/temp_files
+
+super:
+  activationPhrase: ACTIVATION_PHRASE
+

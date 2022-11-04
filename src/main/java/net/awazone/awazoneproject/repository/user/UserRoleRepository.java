@@ -1,6 +1,6 @@
 package net.awazone.awazoneproject.repository.user;
 
-import net.awazone.awazoneproject.model.userService.awazoneUserRole.AwazoneUserRole;
+import net.awazone.awazoneproject.model.user.awazoneUserRole.AwazoneUserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

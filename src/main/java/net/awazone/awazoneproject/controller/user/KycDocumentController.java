@@ -1,12 +1,13 @@
 package net.awazone.awazoneproject.controller.user;
 
 import lombok.AllArgsConstructor;
-import net.awazone.awazoneproject.controller.exception.ResponseMessage;
-import net.awazone.awazoneproject.model.userService.kyc.KycDocument;
+import net.awazone.awazoneproject.exception.ResponseMessage;
+import net.awazone.awazoneproject.model.user.kyc.KycDocument;
 import net.awazone.awazoneproject.service.serviceInterfaces.user.KycDocumentService;
 import net.awazone.awazoneproject.utility.files.FileUploadResponse;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -16,18 +17,20 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @AllArgsConstructor
 @RequestMapping(path = "api/v1/user/kyc")
 public class KycDocumentController {
-
     private final KycDocumentService kycDocumentService;
 
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_UPLOAD_DOCS','ROLE_SUPER:ADMIN')")
     @PostMapping(path = "/upload/{userId}")
-    public ResponseEntity<FileUploadResponse> uploadKycDocument(@PathVariable Long userId, MultipartFile file) {
-        return ResponseEntity.ok(kycDocumentService.registerNewKyc(userId, file));
+    public ResponseEntity<ResponseMessage> uploadKycDocument(@PathVariable Long userId, MultipartFile file) {
+
+        FileUploadResponse fileUploadResponse = kycDocumentService.registerNewKyc(userId, file);
+        return ResponseEntity.ok(new ResponseMessage("success", HttpStatus.OK, Map.of("response", fileUploadResponse)));
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_VIEW_DOCS','ROLE_SUPER:ADMIN')")
@@ -48,8 +51,10 @@ public class KycDocumentController {
 
     @PreAuthorize("hasAnyAuthority('ROLE_VIEW_DOCS','ROLE_SUPER:ADMIN')")
     @GetMapping(path = "/get/all/{page}")
-    public List<KycDocument> findAllDocument(@PathVariable int page) {
-        return kycDocumentService.findAllUserKyc(page);
+    public ResponseEntity<ResponseMessage> findAllDocument(@PathVariable int page) {
+
+        List<KycDocument> allUserKyc = kycDocumentService.findAllUserKyc(page);
+        return ResponseEntity.ok(new ResponseMessage("success", HttpStatus.OK, Map.of("response", allUserKyc)));
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_READ_KYC_STATUS','ROLE_SUPER:ADMIN')")

@@ -1,6 +1,6 @@
 package net.awazone.awazoneproject.repository.user;
 
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUser;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -29,5 +29,9 @@ public interface AwazoneUserRepository extends JpaRepository<AwazoneUser, Long> 
     @Query(nativeQuery = true, value = "SELECT count(id) FROM awazone_user WHERE is_enabled = true")
     int countAllEnabled();
 
+    @Query(value = "SELECT user FROM AwazoneUser user WHERE user.referralCode = ?1")
+    Optional<AwazoneUser> findByReferralCode(String referralCode);
 
+    @Query(value = "SELECT user FROM AwazoneUser user WHERE user.referral = ?1")
+    List<AwazoneUser> findByReferral(AwazoneUser awazoneUser);
 }

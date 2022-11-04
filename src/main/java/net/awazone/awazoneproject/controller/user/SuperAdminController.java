@@ -1,9 +1,9 @@
 package net.awazone.awazoneproject.controller.user;
 
 import lombok.RequiredArgsConstructor;
-import net.awazone.awazoneproject.controller.exception.ResponseMessage;
-import net.awazone.awazoneproject.model.requests.user.AwazoneUserAddressRequest;
-import net.awazone.awazoneproject.model.requests.user.PasswordResetModel;
+import net.awazone.awazoneproject.exception.ResponseMessage;
+import net.awazone.awazoneproject.model.dtos.user.AwazoneUserAddressRequest;
+import net.awazone.awazoneproject.model.dtos.user.PasswordResetModel;
 import net.awazone.awazoneproject.service.serviceInterfaces.user.AuthService;
 import net.awazone.awazoneproject.utility.validation.annotations.AdminSuper;
 import org.springframework.http.ResponseEntity;

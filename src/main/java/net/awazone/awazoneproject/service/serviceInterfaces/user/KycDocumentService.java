@@ -1,7 +1,7 @@
 package net.awazone.awazoneproject.service.serviceInterfaces.user;
 
-import net.awazone.awazoneproject.controller.exception.ResponseMessage;
-import net.awazone.awazoneproject.model.userService.kyc.KycDocument;
+import net.awazone.awazoneproject.exception.ResponseMessage;
+import net.awazone.awazoneproject.model.user.kyc.KycDocument;
 import net.awazone.awazoneproject.utility.files.FileUploadResponse;
 import org.springframework.web.multipart.MultipartFile;
 

@@ -2,12 +2,15 @@ package net.awazone.awazoneproject.service.servicesImpl.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.awazone.awazoneproject.controller.exception.EmailNotSentException;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUser;
-import net.awazone.awazoneproject.model.userService.notification.Notification;
-import net.awazone.awazoneproject.model.userService.notification.NotificationPurpose;
-import net.awazone.awazoneproject.model.userService.notification.NotificationType;
+import net.awazone.awazoneproject.configuration.termii.TermiiCredential;
+import net.awazone.awazoneproject.exception.EmailNotSentException;
+import net.awazone.awazoneproject.model.dtos.sms.SmsRequest;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUser;
+import net.awazone.awazoneproject.model.user.notification.Notification;
+import net.awazone.awazoneproject.model.user.notification.NotificationPurpose;
+import net.awazone.awazoneproject.model.user.notification.NotificationType;
 import net.awazone.awazoneproject.repository.user.NotificationRepository;
+import net.awazone.awazoneproject.service.serviceInterfaces.aibopay.PaymentProcessor;
 import net.awazone.awazoneproject.service.serviceInterfaces.user.NotificationService;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -21,9 +24,9 @@ import javax.mail.internet.MimeMessage;
 
 import java.time.LocalDateTime;
 
-import static net.awazone.awazoneproject.controller.exception.ResponseMessage.EMAIL_NOT_SENT;
-import static net.awazone.awazoneproject.model.userService.notification.NotificationType.EMAIL;
-import static net.awazone.awazoneproject.model.userService.notification.NotificationType.SMS;
+import static net.awazone.awazoneproject.exception.ResponseMessage.EMAIL_NOT_SENT;
+import static net.awazone.awazoneproject.model.user.notification.NotificationType.EMAIL;
+import static net.awazone.awazoneproject.model.user.notification.NotificationType.SMS;
 
 @Slf4j
 @Service
@@ -31,6 +34,8 @@ import static net.awazone.awazoneproject.model.userService.notification.Notifica
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final TermiiCredential termiiCredential;
+    private final PaymentProcessor paymentProcessor;
 
     private final JavaMailSender mailSender;
 
@@ -41,10 +46,20 @@ public class NotificationServiceImpl implements NotificationService {
         createNotification(awazoneUser.getAwazoneUserContact().getMobilePhone(), awazoneUser.getAwazoneUserContact().getEmail(), notificationType, notificationPurpose, sender);
 
         if(notificationType.equals(SMS)) {
-            sendSms(awazoneUser.getAwazoneUserContact().getMobilePhone(), message, sender, subject);
+            sendSms(awazoneUser.getAwazoneUserContact().getMobilePhone(), message, sender);
         }
         else if(notificationType.equals(EMAIL)) {
             sendEmail(awazoneUser.getAwazoneUserContact().getEmail(), message, sender, subject);
+        }
+    }
+
+    @Override
+    public void sendNotification(String destination, NotificationType notificationType, NotificationPurpose notificationPurpose, String sender, String subject, String message) {
+        if(notificationType.equals(SMS)) {
+            sendSms(destination, message, sender);
+        }
+        else if(notificationType.equals(EMAIL)) {
+            sendEmail(destination, message, sender, subject);
         }
     }
 
@@ -67,8 +82,18 @@ public class NotificationServiceImpl implements NotificationService {
 
     }
 
-    private void sendSms(String mobilePhone, String message, String sender, String subject) {
+    private void sendSms(String mobilePhone, String message, String sender) {
 
+        SmsRequest smsRequest = SmsRequest.builder()
+                .api_key(termiiCredential.getApi_key())
+                .channel(termiiCredential.getChannel())
+                .from(sender)
+                .to(mobilePhone)
+                .type(termiiCredential.getType())
+                .sms(message)
+                .build();
+
+        paymentProcessor.sendSms(smsRequest);
     }
 
 

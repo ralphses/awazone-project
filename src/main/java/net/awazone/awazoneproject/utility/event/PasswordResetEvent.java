@@ -1,7 +1,7 @@
 package net.awazone.awazoneproject.utility.event;
 
 import lombok.Getter;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUser;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUser;
 import org.springframework.context.ApplicationEvent;
 
 @Getter

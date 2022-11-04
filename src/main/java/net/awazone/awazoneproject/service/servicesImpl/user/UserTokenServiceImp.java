@@ -1,9 +1,9 @@
 package net.awazone.awazoneproject.service.servicesImpl.user;
 
-import net.awazone.awazoneproject.controller.exception.InvalidTokenException;
-import net.awazone.awazoneproject.model.userService.TokenType;
-import net.awazone.awazoneproject.model.userService.UserToken;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUser;
+import net.awazone.awazoneproject.exception.CustomInvalidParamException;
+import net.awazone.awazoneproject.model.user.TokenType;
+import net.awazone.awazoneproject.model.user.UserToken;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUser;
 import net.awazone.awazoneproject.repository.user.UserTokenRepository;
 import net.awazone.awazoneproject.service.serviceInterfaces.user.UserTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-import static net.awazone.awazoneproject.controller.exception.MainException.INVALID_TOKEN_MESSAGE;
-import static net.awazone.awazoneproject.controller.exception.ResponseMessage.*;
+import static net.awazone.awazoneproject.exception.MainException.INVALID_TOKEN_MESSAGE;
+import static net.awazone.awazoneproject.exception.ResponseMessage.*;
 
 @Service
 @Transactional
@@ -24,18 +24,18 @@ public class UserTokenServiceImp implements UserTokenService {
 
     @Override
     public UserToken verifyToken(String token, TokenType tokenType) {
-        UserToken userToken = userTokenRepository.findByTokenStringAAndTokenType(token, tokenType).orElseThrow(() -> new InvalidTokenException(INVALID_TOKEN_MESSAGE));
+        UserToken userToken = userTokenRepository.findByTokenStringAAndTokenType(token, tokenType)
+                .orElseThrow(() -> new CustomInvalidParamException(INVALID_TOKEN_MESSAGE));
 
         if(LocalDateTime.now().isAfter(userToken.getExpiresAt())) {
             userTokenRepository.delete(userToken);
-            throw new InvalidTokenException(TOKEN_EXPIRED);
+            throw new CustomInvalidParamException(TOKEN_EXPIRED);
         }
         //Activate this user account
         AwazoneUser awazoneUser = userToken.getAwazoneUser();
         awazoneUser.setAccountNonLocked(true);
         awazoneUser.setAccountNonExpired(true);
         awazoneUser.setCredentialsNonExpired(true);
-
 
         userTokenRepository.delete(userToken);
         return userToken;

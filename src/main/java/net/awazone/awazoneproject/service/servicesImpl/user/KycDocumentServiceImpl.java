@@ -2,22 +2,23 @@ package net.awazone.awazoneproject.service.servicesImpl.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.awazone.awazoneproject.controller.exception.CustomFileNotFoundException;
-import net.awazone.awazoneproject.controller.exception.KycDocumentException;
-import net.awazone.awazoneproject.controller.exception.ResponseMessage;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUser;
-import net.awazone.awazoneproject.model.userService.kyc.KycDocument;
+import net.awazone.awazoneproject.exception.FileStorageException;
+import net.awazone.awazoneproject.exception.KycDocumentException;
+import net.awazone.awazoneproject.exception.ResourceNotFoundException;
+import net.awazone.awazoneproject.exception.ResponseMessage;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUser;
+import net.awazone.awazoneproject.model.user.kyc.KycDocument;
 import net.awazone.awazoneproject.repository.user.KycDocumentRepository;
 import net.awazone.awazoneproject.service.serviceInterfaces.user.AwazoneUserService;
 import net.awazone.awazoneproject.service.serviceInterfaces.user.KycDocumentService;
 import net.awazone.awazoneproject.utility.files.FileStorage;
 import net.awazone.awazoneproject.utility.files.FileUploadResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,12 +28,14 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static net.awazone.awazoneproject.model.userService.kyc.KycStatus.APPROVED;
-import static net.awazone.awazoneproject.model.userService.kyc.KycStatus.PENDING;
+import static net.awazone.awazoneproject.model.user.kyc.KycStatus.APPROVED;
+import static net.awazone.awazoneproject.model.user.kyc.KycStatus.PENDING;
 import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.MediaType.*;
 
 @Slf4j
 @Service
@@ -42,8 +45,7 @@ public class KycDocumentServiceImpl implements KycDocumentService {
 
     private final KycDocumentRepository kycDocumentRepository;
     private final AwazoneUserService awazoneUserService;
-    @Autowired
-    private FileStorage fileStorage;
+    private final FileStorage fileStorage;
 
     @Override
     public FileUploadResponse registerNewKyc(Long userId, MultipartFile file) {
@@ -51,11 +53,12 @@ public class KycDocumentServiceImpl implements KycDocumentService {
         AwazoneUser awazoneUser = awazoneUserService.findAppUserById(userId);
 
         Optional<KycDocument> old = kycDocumentRepository.findByAwazoneUser(awazoneUser);
+
         if(old.isPresent()) {
             throw new KycDocumentException("User already verified");
         }
 
-        String fileName = fileStorage.storeFile(file);
+        String fileName = fileStorage.storeFile(file, "kyc_" + awazoneUser.getAwazoneUserDomain().getDomainName() + ".jpg");
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("api/v1/user/kyc/download")
                 .queryParamIfPresent("username", Optional.ofNullable(awazoneUser.getAwazoneUserContact().getEmail()))
@@ -84,20 +87,9 @@ public class KycDocumentServiceImpl implements KycDocumentService {
         AwazoneUser awazoneUser = findKycByUserNameOrEmail(username);
 
         KycDocument kycDocument = kycDocumentRepository.findByAwazoneUser(awazoneUser)
-                .orElseThrow(() -> new CustomFileNotFoundException("No KYC document found"));
+                .orElseThrow(() -> new ResourceNotFoundException("No KYC document found"));
 
-        Resource kycDocumentResource = fileStorage.loadFileAsResource(kycDocument.getDocumentName());
-
-        try {
-            AtomicReference<String> contentType = new AtomicReference<>(httpServletRequest.getServletContext().getMimeType(kycDocumentResource.getFile().getAbsolutePath()));
-            if(contentType.get() == null) contentType.set("application/octet-stream");
-
-            return new FileUploadResponse(kycDocumentResource.getFilename(), "", contentType.get(), 0, kycDocumentResource);
-
-        } catch (IOException e) {
-            log.info("Could not determine file type");
-            throw new CustomFileNotFoundException("Could not determine file type");
-        }
+        return fileStorage.getFileUploadResponse(httpServletRequest, kycDocument.getDocumentName());
 
     }
 
@@ -113,7 +105,7 @@ public class KycDocumentServiceImpl implements KycDocumentService {
                 kycDocumentRepository.delete(document);
 
             } catch (IOException e) {
-                throw new CustomFileNotFoundException("No Kyc document for user with this ID" + userId);
+                throw new ResourceNotFoundException("No Kyc document for user with this ID" + userId);
             }
         }
         return ResponseMessage.builder()
@@ -130,13 +122,13 @@ public class KycDocumentServiceImpl implements KycDocumentService {
 
     @Override
     public ResponseMessage getKycStatus(Long kycId) {
-        return new ResponseMessage(findKycById(kycId).getKycStatus().name(), OK);
+        return new ResponseMessage(findKycById(kycId).getKycStatus().name(), OK, null);
     }
 
     @Override
     public KycDocument findKycById(Long kycId) {
         return kycDocumentRepository
-                .findById(kycId).orElseThrow(() -> new CustomFileNotFoundException("KYC with this does not exist"));
+                .findById(kycId).orElseThrow(() -> new ResourceNotFoundException("KYC with this does not exist"));
     }
 
     @Override
@@ -144,14 +136,14 @@ public class KycDocumentServiceImpl implements KycDocumentService {
         KycDocument kycDocument = findKycById(kycId);
         kycDocument.setKycStatus(APPROVED);
         kycDocument.setDateVerified(LocalDateTime.now());
-        return new ResponseMessage("KYC Approved", OK);
+        return new ResponseMessage("KYC Approved", OK, null);
     }
 
     @Override
     public KycDocument findKycByUserEmail(String email) {
         return kycDocumentRepository
                 .findByAwazoneUser(findKycByUserNameOrEmail(email))
-                .orElseThrow(() -> new CustomFileNotFoundException("No Kyc document for this User"));
+                .orElseThrow(() -> new ResourceNotFoundException("No Kyc document for this User"));
     }
 
     @Override
@@ -159,7 +151,7 @@ public class KycDocumentServiceImpl implements KycDocumentService {
         Optional<KycDocument> kycDocument = kycDocumentRepository
                 .findByAwazoneUser(findKycByUserNameOrEmail(userName));
         kycDocument.ifPresent(kycDocumentRepository::delete);
-        return new ResponseMessage("Document deleted successfully", OK);
+        return new ResponseMessage("Document deleted successfully", OK, null);
     }
 
     private AwazoneUser findKycByUserNameOrEmail(String username) {

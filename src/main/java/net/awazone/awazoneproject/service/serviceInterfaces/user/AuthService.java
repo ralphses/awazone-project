@@ -1,12 +1,11 @@
 package net.awazone.awazoneproject.service.serviceInterfaces.user;
 
-import net.awazone.awazoneproject.controller.exception.ResponseMessage;
-import net.awazone.awazoneproject.model.userService.JwtToken;
-import net.awazone.awazoneproject.model.userService.UserToken;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUser;
-import net.awazone.awazoneproject.model.requests.user.AwazoneUserAddressRequest;
-import net.awazone.awazoneproject.model.requests.user.NewRegistrationRequest;
-import net.awazone.awazoneproject.model.requests.user.PasswordResetModel;
+import net.awazone.awazoneproject.exception.ResponseMessage;
+import net.awazone.awazoneproject.model.user.JwtToken;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUser;
+import net.awazone.awazoneproject.model.dtos.user.AwazoneUserAddressRequest;
+import net.awazone.awazoneproject.model.dtos.user.NewRegistrationRequest;
+import net.awazone.awazoneproject.model.dtos.user.PasswordResetModel;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,13 +20,11 @@ public interface AuthService {
     JwtToken saveAuthToken(String token);
     void passwordReset(String tokenString, PasswordResetModel passwordResetModel);
 
-    UserToken activateUser(String token);
+    void activateUser(String token);
 
     Optional<JwtToken> findToken(String tokenString);
 
     List<JwtToken> findByAddress(String address);
-
-    void resendLink(String userEmail, HttpServletRequest httpServletRequest);
 
     void saveAllJwts(List<JwtToken> jwtTokens);
 

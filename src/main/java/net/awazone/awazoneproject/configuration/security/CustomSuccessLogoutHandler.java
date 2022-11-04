@@ -1,7 +1,7 @@
 package net.awazone.awazoneproject.configuration.security;
 
-import net.awazone.awazoneproject.controller.exception.IllegalUserException;
-import net.awazone.awazoneproject.model.userService.JwtToken;
+import net.awazone.awazoneproject.exception.IllegalUserException;
+import net.awazone.awazoneproject.model.user.JwtToken;
 import net.awazone.awazoneproject.service.servicesImpl.user.AuthServiceImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static net.awazone.awazoneproject.controller.exception.ResponseMessage.ILLEGAL_USER;
+import static net.awazone.awazoneproject.exception.ResponseMessage.ILLEGAL_USER;
 
 @Service
 @Transactional
@@ -23,7 +23,9 @@ public class CustomSuccessLogoutHandler implements LogoutSuccessHandler {
 
     @Override
     @Transactional
-    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+    public void onLogoutSuccess(HttpServletRequest request,
+                                HttpServletResponse response,
+                                Authentication authentication) throws IOException, ServletException {
 
         List<JwtToken> jwtTokens = AuthServiceImpl.authService.findByAddress(request.getRemoteAddr());
 

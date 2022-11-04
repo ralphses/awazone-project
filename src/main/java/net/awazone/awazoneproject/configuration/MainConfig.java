@@ -10,7 +10,7 @@ import static java.util.Arrays.stream;
 @Configuration
 public class MainConfig {
 
-
+    public static final String PAYMENT_REDIRECT_URL = "/aibopay/transaction/confirm";
 
     @Bean
     Utility utility() {

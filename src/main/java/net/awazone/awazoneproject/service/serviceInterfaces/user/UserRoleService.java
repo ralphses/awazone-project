@@ -1,7 +1,7 @@
 package net.awazone.awazoneproject.service.serviceInterfaces.user;
 
-import net.awazone.awazoneproject.model.userService.awazoneUserRole.AwazoneUserRole;
-import net.awazone.awazoneproject.model.requests.user.NewRoleRequest;
+import net.awazone.awazoneproject.model.user.awazoneUserRole.AwazoneUserRole;
+import net.awazone.awazoneproject.model.dtos.user.NewRoleRequest;
 
 import java.util.List;
 

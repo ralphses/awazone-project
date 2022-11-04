@@ -4,5 +4,6 @@ public enum AccountStatus {
 
     ENABLED,
     FROZEN,
-    SUSPENDED
+    SUSPENDED,
+    INACTIVE
 }

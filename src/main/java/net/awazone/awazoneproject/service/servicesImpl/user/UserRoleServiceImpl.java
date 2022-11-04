@@ -1,13 +1,13 @@
 package net.awazone.awazoneproject.service.servicesImpl.user;
 
-import net.awazone.awazoneproject.controller.exception.CustomRoleNotFoundException;
-import net.awazone.awazoneproject.controller.exception.DuplicateUserRoleException;
-import net.awazone.awazoneproject.model.userService.awazoneUserRole.AwazoneUserAuthority;
-import net.awazone.awazoneproject.model.userService.awazoneUserRole.AwazoneUserRole;
-import net.awazone.awazoneproject.model.requests.user.NewRoleRequest;
+import lombok.AllArgsConstructor;
+import net.awazone.awazoneproject.exception.ResourceAlreadyExistException;
+import net.awazone.awazoneproject.exception.ResourceNotFoundException;
+import net.awazone.awazoneproject.model.user.awazoneUserRole.AwazoneUserAuthority;
+import net.awazone.awazoneproject.model.user.awazoneUserRole.AwazoneUserRole;
+import net.awazone.awazoneproject.model.dtos.user.NewRoleRequest;
 import net.awazone.awazoneproject.repository.user.UserRoleRepository;
 import net.awazone.awazoneproject.service.serviceInterfaces.user.UserRoleService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,25 +17,28 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
-import static net.awazone.awazoneproject.controller.exception.ResponseMessage.ROLE_NAME_TAKEN;
-import static net.awazone.awazoneproject.controller.exception.ResponseMessage.ROLE_NOT_FOUND;
+import static net.awazone.awazoneproject.exception.ResponseMessage.ROLE_NAME_TAKEN;
+import static net.awazone.awazoneproject.exception.ResponseMessage.ROLE_NOT_FOUND;
 
 @Service
+@AllArgsConstructor
 @Transactional
 public class UserRoleServiceImpl implements UserRoleService {
 
-    @Autowired
-    private UserRoleRepository userRoleRepository;
+    private final UserRoleRepository userRoleRepository;
 
     @Override
     public void createRole(NewRoleRequest newRoleRequest) {
-        Optional<AwazoneUserRole> awazoneUserRoleOptional = userRoleRepository.findByRoleName(newRoleRequest.getRoleName());
+
+        Optional<AwazoneUserRole> awazoneUserRoleOptional =
+                userRoleRepository.findByRoleName(newRoleRequest.getRoleName());
+
         if(awazoneUserRoleOptional.isPresent()) {
-            throw new DuplicateUserRoleException(ROLE_NAME_TAKEN);
+            throw new ResourceAlreadyExistException(ROLE_NAME_TAKEN);
         }
         AwazoneUserRole awazoneUserRole = AwazoneUserRole.builder()
                 .roleDescription(newRoleRequest.getRoleDescription())
-                .roleSet(newRoleRequest.getRoleSet())
+                .roleSet("USERxx" + newRoleRequest.getRoleSet())
                 .roleName(newRoleRequest.getRoleName())
                 .build();
         userRoleRepository.save(awazoneUserRole);
@@ -43,26 +46,28 @@ public class UserRoleServiceImpl implements UserRoleService {
 
     @Override
     public void updateRoleDescription(String roleName, String newDescription) {
-        AwazoneUserRole awazoneUserRole = userRoleRepository.findByRoleName(roleName).orElseThrow(() -> new CustomRoleNotFoundException(ROLE_NOT_FOUND));
+        AwazoneUserRole awazoneUserRole = userRoleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new ResourceNotFoundException(ROLE_NOT_FOUND));
         awazoneUserRole.setRoleDescription(newDescription);
     }
 
     @Override
     public void updateRoleName(String oldRoleName, String newRoleName){
-        AwazoneUserRole awazoneUserRole = userRoleRepository.findByRoleName(oldRoleName).orElseThrow(() -> new CustomRoleNotFoundException(ROLE_NOT_FOUND));
+        AwazoneUserRole awazoneUserRole = userRoleRepository.findByRoleName(oldRoleName)
+                .orElseThrow(() -> new ResourceNotFoundException(ROLE_NOT_FOUND));
         awazoneUserRole.setRoleName(newRoleName);
     }
 
     @Override
     public void deleteRole(Long roleId){
-        AwazoneUserRole awazoneUserRole = userRoleRepository.findById(roleId).orElseThrow(() -> new CustomRoleNotFoundException(ROLE_NOT_FOUND));
+        AwazoneUserRole awazoneUserRole = userRoleRepository.findById(roleId).orElseThrow(() -> new ResourceNotFoundException(ROLE_NOT_FOUND));
         userRoleRepository.delete(awazoneUserRole);
     }
 
     @Override
     public AwazoneUserRole getRoleByName(String roleName) {
         return userRoleRepository.findByRoleName(roleName)
-                .orElseThrow(() -> new CustomRoleNotFoundException("Role not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
     }
 
     @Override

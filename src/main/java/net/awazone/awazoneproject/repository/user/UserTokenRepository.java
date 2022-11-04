@@ -1,7 +1,7 @@
 package net.awazone.awazoneproject.repository.user;
 
-import net.awazone.awazoneproject.model.userService.TokenType;
-import net.awazone.awazoneproject.model.userService.UserToken;
+import net.awazone.awazoneproject.model.user.TokenType;
+import net.awazone.awazoneproject.model.user.UserToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

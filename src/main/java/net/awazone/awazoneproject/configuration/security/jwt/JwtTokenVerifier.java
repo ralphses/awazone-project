@@ -5,9 +5,9 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
-import net.awazone.awazoneproject.controller.exception.IllegalUserException;
-import net.awazone.awazoneproject.controller.exception.InvalidTokenException;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUser;
+import net.awazone.awazoneproject.exception.CustomInvalidParamException;
+import net.awazone.awazoneproject.exception.IllegalUserException;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUser;
 import net.awazone.awazoneproject.repository.user.JwtTokenRepository;
 import net.awazone.awazoneproject.service.servicesImpl.user.AuthServiceImpl;
 import net.awazone.awazoneproject.service.servicesImpl.user.JwtConfig;
@@ -28,8 +28,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.net.HttpHeaders.REFRESH;
-import static net.awazone.awazoneproject.controller.exception.MainException.INVALID_TOKEN_MESSAGE;
-import static net.awazone.awazoneproject.controller.exception.ResponseMessage.ILLEGAL_USER;
+import static net.awazone.awazoneproject.exception.MainException.INVALID_TOKEN_MESSAGE;
+import static net.awazone.awazoneproject.exception.ResponseMessage.ILLEGAL_USER;
 
 @Slf4j
 public class JwtTokenVerifier extends OncePerRequestFilter {
@@ -61,12 +61,16 @@ public class JwtTokenVerifier extends OncePerRequestFilter {
 
         if(request.getServletPath().equals("/user/refresh")) {
             try {
-                //Todo: GEt token
+                //Todo: Get token
                 String refreshToken = Optional.ofNullable(request.getHeader(REFRESH))
                         .orElseThrow(() -> new IllegalUserException(ILLEGAL_USER)).substring(jwtConfig.getRefreshTokenPrefix().length());
 
-                //TODO: Verify token
-                Jws<Claims> claimsJws = Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(refreshToken);
+                //TODO: Verify refresh token
+                Jws<Claims> claimsJws = Jwts.parserBuilder()
+                        .setSigningKey(secretKey)
+                        .build()
+                        .parseClaimsJws(refreshToken);
+
                 String username = claimsJws.getBody().getSubject();
 
                 //TODO: verify that user is not logged out
@@ -76,14 +80,19 @@ public class JwtTokenVerifier extends OncePerRequestFilter {
 
                 //TODO: Generate new token
                 AwazoneUser awazoneUser = AuthServiceImpl.authService.findByEmail(username);
-                Set<SimpleGrantedAuthority> auth = awazoneUser.getAuthorities().stream().map(aut -> new SimpleGrantedAuthority(aut.getAuthority())).collect(Collectors.toSet());
+
+                Set<SimpleGrantedAuthority> auth = awazoneUser
+                        .getAuthorities()
+                        .stream()
+                        .map(aut -> new SimpleGrantedAuthority(aut.getAuthority()))
+                        .collect(Collectors.toSet());
 
                 String accessToken = jwtConfig.createAccessToken(username, auth, secretKey, request);
                 response.setHeader(jwtConfig.getAuthorizationHeader(), jwtConfig.getAccessTokenPrefix() + accessToken);
 
 
             } catch (JwtException jwtException) {
-                throw new InvalidTokenException(INVALID_TOKEN_MESSAGE);
+                throw new CustomInvalidParamException(INVALID_TOKEN_MESSAGE);
             }
 
             filterChain.doFilter(request, response);
@@ -91,7 +100,7 @@ public class JwtTokenVerifier extends OncePerRequestFilter {
 
         if(authorizationHeader.isPresent() && authorizationHeader.get().startsWith("Bearer_")) {
             try {
-                String token = authorizationHeader.orElseThrow(() -> new InvalidTokenException(INVALID_TOKEN_MESSAGE)).replace(jwtConfig.getAccessTokenPrefix(), "");
+                String token = authorizationHeader.orElseThrow(() -> new CustomInvalidParamException(INVALID_TOKEN_MESSAGE)).replace(jwtConfig.getAccessTokenPrefix(), "");
                 Jws<Claims> claimsJws = Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
 
                 Claims claims = claimsJws.getBody();
@@ -108,7 +117,7 @@ public class JwtTokenVerifier extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
             catch (JwtException jwtException) {
-                throw new InvalidTokenException("Bad Token", jwtException);
+                throw new CustomInvalidParamException("Bad Token", jwtException);
             }
         }
         else {

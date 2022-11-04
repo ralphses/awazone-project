@@ -1,11 +1,13 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   datasource:
     url: jdbc:postgresql://localhost:5432/awazone_project
-    username: ralph
-    password: password
+    username: ENC(7Ov5omflIuybq4rdY1dcUQ==)
+    password: ENC(83pZjpyFnsn0H5icQfaCKKtkDv1WX6EB)
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     properties:
       hibernate:
         format_sql: true
@@ -16,13 +18,11 @@ spring:
       max-file-size: 5MB
       max-request-size: 20MB
 
-
-
   mail:
     host: localhost
     port: 1025
-    username: hello
-    password: hello
+    username: ENC(hW5avP5mRB//za6Y32nn5A==)
+    password: ENC(hW5avP5mRB//za6Y32nn5A==)
     properties:
       mail:
         smtp:
@@ -37,14 +37,38 @@ spring:
 
 application:
   jwt:
-    secreteKey: i have come to the point where i finally need to take this hard decision and today, I temporally left my 3+ years old relationship...this is really sad and I can't believe it actually happened
+    secreteKey: ENC(9VsNtZQGZVUO9H4kmiJXcXNjDlhDBwrvVaq+6YC+yW1BF/kC65yCEeZcjjwO6t4pCOM3Nw/fS8ZxxA8L13MmX/BvA4wXX7mG/uB1Mz3FWUTdVeOgbZcUuXC5saqTnu3EI5Kg5wBXP1GNy5pn+kx5HgC44UpsaR/w+BrOG9Do7qklQ6L07ipFcxnoWghH0fmeFcAdSdYsX30V/xnl162RgkRX/h+NA+86lGA/XaAlW5zl39Ew93m9FXMtTGk8RMtsMYE94zzbbcEjykb4w88S5w==)
     accessTokenPrefix: Bearer_
     refreshTokenPrefix: Refresh_
     tokenExpirationAfter: 1
 
 file:
-  upload-dir: src/main/resources/temp_files
+  upload-dir: src/main/resources/temp_files/
+
+monify:
+  key: ENC(1fKzPXLtSuDQ3zVj1mwKb4UBML77viMmn0rvmKo/1gE=)
+  secrete: ENC(2GdjjnVdbpJpE9ye3jM/3IJOBEx8dZWSbLG/qX0xEJ0FpVO6+h04mMcvtotfTAGy)
 
 super:
   activationPhrase: ACTIVATION_PHRASE
+
+
+termii:
+  api_key: ENC(xQU3hRwW432WYyEGvV5rLI9bqCHehQV86F82pprYD+rvtnFYcJwPcSPk00difDvn5yckHbSDx0uaRLIleJqYdCnjgy6keq8h)
+  type: plain
+  channel: generic
+
+coinremitter:
+  password: ENC(CT5AkljyIO+oceaQT7jQQ6d6QIOp19vX0Td010qnNsM=)
+
+mobileNg:
+  public_key: ENC(Iv1bsVQ8jRQ1jG3Jw/Y81jCqYHBFZnYLEVxBYPaR8jyPndY+LX0fMuUhOB2F5VVaenXE3KYIkKED64KkZH28Aw==)
+  secrete_key: ENC(ZF1JG73TSnclWpBiAof5oWOxlj+qP0zMQ14MjnoQ68MKE1rajWPhzOs40Iyoktn+kPpWLFj9Jx7vy4FUGVTSMw==)
+
+property:
+  someThingGood: ${someThingGood}
+  algorithm: ${algorithm}
+
+
+
 

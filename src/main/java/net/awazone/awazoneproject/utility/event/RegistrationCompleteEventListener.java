@@ -2,7 +2,7 @@ package net.awazone.awazoneproject.utility.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUser;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUser;
 import net.awazone.awazoneproject.service.serviceInterfaces.user.NotificationService;
 import net.awazone.awazoneproject.service.serviceInterfaces.user.UserTokenService;
 import net.awazone.awazoneproject.utility.templates.MessageTemplate;
@@ -12,9 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-import static net.awazone.awazoneproject.model.userService.TokenType.SIGN_UP;
-import static net.awazone.awazoneproject.model.userService.notification.NotificationPurpose.SIGN_UP_TOKEN;
-import static net.awazone.awazoneproject.model.userService.notification.NotificationType.EMAIL;
+import static net.awazone.awazoneproject.model.user.TokenType.SIGN_UP;
+import static net.awazone.awazoneproject.model.user.notification.NotificationPurpose.SIGN_UP_TOKEN;
+import static net.awazone.awazoneproject.model.user.notification.NotificationType.EMAIL;
+import static net.awazone.awazoneproject.model.user.notification.NotificationType.SMS;
 
 @Slf4j
 @Component

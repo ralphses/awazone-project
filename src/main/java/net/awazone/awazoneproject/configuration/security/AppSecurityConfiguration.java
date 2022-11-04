@@ -2,19 +2,20 @@ package net.awazone.awazoneproject.configuration.security;
 
 import net.awazone.awazoneproject.configuration.security.jwt.JwtTokenVerifier;
 import net.awazone.awazoneproject.configuration.security.jwt.JwtUsernameAndPasswordAuthenticationFilter;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUser;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUserAddress;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUserContact;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUserDomain;
-import net.awazone.awazoneproject.model.userService.awazoneUserRole.AwazoneUserRole;
+import net.awazone.awazoneproject.model.aibopay.UserWallet;
+import net.awazone.awazoneproject.model.aibopay.account.AibopayAccount;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUser;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUserAddress;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUserContact;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUserDomain;
+import net.awazone.awazoneproject.model.user.awazoneUserRole.AwazoneUserRole;
+import net.awazone.awazoneproject.repository.aibopay.AccountRepository;
+import net.awazone.awazoneproject.repository.aibopay.UserWalletRepository;
 import net.awazone.awazoneproject.repository.user.AwazoneUserRepository;
-import net.awazone.awazoneproject.service.serviceInterfaces.user.UserRoleService;
 import net.awazone.awazoneproject.service.servicesImpl.user.JwtConfig;
-import net.awazone.awazoneproject.utility.Utility;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -25,11 +26,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.SecretKey;
-import javax.servlet.http.HttpServletRequest;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import static net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUserGender.MALE;
+import static net.awazone.awazoneproject.model.aibopay.account.AccountStatus.ENABLED;
+import static net.awazone.awazoneproject.model.aibopay.account.AccountType.SAVINGS;
+import static net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUserGender.MALE;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 @EnableWebSecurity
@@ -41,17 +44,6 @@ public class AppSecurityConfiguration {
 
     private final SecretKey secretKey;
 
-    @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
-
-    @Autowired
-    private UserRoleService userRoleService;
-
-    @Autowired
-    private HttpServletRequest httpServletRequest;
-
-    @Autowired
-    private Utility utility;
     private final JwtConfig jwtConfig;
 
     private static final String[] WHITE_LIST_URL =
@@ -64,7 +56,22 @@ public class AppSecurityConfiguration {
                     "/user/reactivate-link",
                     "/user/password-reset",
                     "/user/new-password",
-                    "/api/v1/admin/super/activate"
+                    "/api/v1/admin/super/activate",
+                    "/api/v1/aibopay/utility/data-bundles",
+                    "/api/v1/aibopay/utility/buy-data",
+                    "/api/v1/aibopay/utility/buy-airtime",
+                    "/api/v1/aibopay/manual/new-manual-payment",
+                    "/api/v1/aibopay/manual/get/one/download",
+                    "/api/v1/aibopay/payment/card",
+                    "/api/v1/aibopay/payment/status",
+                    "/api/v1/aibopay/payment/initialize",
+                    "/api/v1/aibopay/payment/deposit",
+                    "/api/v1/aibopay/payment/transfer",
+                    "/api/v1/aibopay/payment/get/all-banks",
+                    "/api/v1/aibopay/payment/crypto/{coinType}",
+                    "/api/v1/aibopay/payment/get/payment",
+                    "/api/v1/aibopay/payment/crypto",
+                    "/api/v1/aibopay/payment/transaction/notification"
 //                    "/api/**"
             };
 
@@ -100,18 +107,20 @@ public class AppSecurityConfiguration {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
+
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(11);
     }
 
     @Bean
-    CommandLineRunner commandLineRunner(AwazoneUserRepository awazoneUserRepository) {
+    CommandLineRunner commandLineRunner(AwazoneUserRepository awazoneUserRepository, UserWalletRepository userWalletRepository, AccountRepository accountRepository) {
         return args -> {
 
             AwazoneUser awazoneUserAdmin = AwazoneUser.builder()
+                    .referralCode("super_admin")
                     .awazoneUserContact(AwazoneUserContact.builder()
-                            .email("super_admin@awazone.net")
+                            .email("super_admin1@awazone.net")
                             .build())
                     .awazoneUserDomain(AwazoneUserDomain.builder()
                             .domainName("super_admin")
@@ -136,6 +145,30 @@ public class AppSecurityConfiguration {
                     .isCredentialsNonExpired(true)
                     .isEnabled(false)
                     .build();
+
+            awazoneUserRepository.save(awazoneUserAdmin);
+
+            AibopayAccount awazoneAccount = AibopayAccount.builder()
+                    .accountStatus(ENABLED)
+                    .bvn("22222222222")
+                    .accountType(SAVINGS)
+                    .currentBalance(BigDecimal.valueOf(0.0))
+                    .createdAt(LocalDateTime.now())
+                    .activatedAt(LocalDateTime.now())
+                    .customerName(awazoneUserAdmin.getFullName())
+                    .accountReference("Awazone")
+                    .accountNumber("5000516888")
+                    .build();
+
+            accountRepository.save(awazoneAccount);
+
+            UserWallet wallet = UserWallet.builder()
+                    .address("AWAZONE")
+                    .awazoneUser(awazoneUserAdmin)
+                    .account(awazoneAccount)
+                    .build();
+            userWalletRepository.save(wallet);
+
         };
     }
 }

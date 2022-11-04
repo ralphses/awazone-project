@@ -4,7 +4,7 @@ import io.jsonwebtoken.Jwts;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.awazone.awazoneproject.model.userService.JwtToken;
+import net.awazone.awazoneproject.model.user.JwtToken;
 import net.awazone.awazoneproject.repository.user.AwazoneUserRepository;
 import net.awazone.awazoneproject.repository.user.JwtTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,7 +78,6 @@ public class JwtConfig {
 
         String refreshToken = Jwts.builder()
                 .setSubject(subject)
-
                 .claim("origin", httpServletRequest.getRemoteAddr())
                 .setIssuedAt(new Date())
                 .setExpiration(java.sql.Date.valueOf(LocalDate.now().plusDays(3)))
@@ -90,5 +89,6 @@ public class JwtConfig {
     }
 
     public void createNewTokens(String refreshToken) {
+
     }
 }

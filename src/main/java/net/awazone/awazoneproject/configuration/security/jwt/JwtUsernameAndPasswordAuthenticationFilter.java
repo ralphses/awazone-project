@@ -1,8 +1,8 @@
 package net.awazone.awazoneproject.configuration.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.awazone.awazoneproject.controller.exception.UserNotActiveException;
-import net.awazone.awazoneproject.model.requests.user.UsernameAndPasswordAuthenticationRequest;
+import net.awazone.awazoneproject.exception.UserNotActiveException;
+import net.awazone.awazoneproject.model.dtos.user.UsernameAndPasswordAuthenticationRequest;
 import net.awazone.awazoneproject.service.servicesImpl.user.AuthServiceImpl;
 import net.awazone.awazoneproject.service.servicesImpl.user.JwtConfig;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static net.awazone.awazoneproject.controller.exception.ResponseMessage.USER_NOT_ACTIVATED;
+import static net.awazone.awazoneproject.exception.ResponseMessage.USER_NOT_ACTIVATED;
 
 public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 

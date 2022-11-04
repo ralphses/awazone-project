@@ -1,41 +1,36 @@
 package net.awazone.awazoneproject.service.servicesImpl.user;
 
-import net.awazone.awazoneproject.controller.exception.IllegalUserException;
-import net.awazone.awazoneproject.controller.exception.PasswordNotMatchException;
-import net.awazone.awazoneproject.controller.exception.ResponseMessage;
-import net.awazone.awazoneproject.model.userService.ActivateAdminPhrase;
-import net.awazone.awazoneproject.model.userService.JwtToken;
-import net.awazone.awazoneproject.model.userService.UserToken;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUser;
-import net.awazone.awazoneproject.model.userService.awazoneUser.AwazoneUserAddress;
-import net.awazone.awazoneproject.model.userService.awazoneUserRole.AwazoneUserRole;
-import net.awazone.awazoneproject.model.requests.user.AwazoneUserAddressRequest;
-import net.awazone.awazoneproject.model.requests.user.NewRegistrationRequest;
-import net.awazone.awazoneproject.model.requests.user.PasswordResetModel;
+import net.awazone.awazoneproject.exception.CustomInvalidParamException;
+import net.awazone.awazoneproject.exception.IllegalUserException;
+import net.awazone.awazoneproject.exception.ResponseMessage;
+import net.awazone.awazoneproject.model.user.ActivateAdminPhrase;
+import net.awazone.awazoneproject.model.user.JwtToken;
+import net.awazone.awazoneproject.model.user.UserToken;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUser;
+import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUserAddress;
+import net.awazone.awazoneproject.model.user.awazoneUserRole.AwazoneUserRole;
+import net.awazone.awazoneproject.model.dtos.user.AwazoneUserAddressRequest;
+import net.awazone.awazoneproject.model.dtos.user.NewRegistrationRequest;
+import net.awazone.awazoneproject.model.dtos.user.PasswordResetModel;
 import net.awazone.awazoneproject.repository.user.AuthRepository;
 import net.awazone.awazoneproject.repository.user.JwtTokenRepository;
-import net.awazone.awazoneproject.service.serviceInterfaces.user.UserRoleService;
-import net.awazone.awazoneproject.service.serviceInterfaces.user.UserTokenService;
-import net.awazone.awazoneproject.service.serviceInterfaces.user.AuthService;
-import net.awazone.awazoneproject.service.serviceInterfaces.user.AwazoneUserService;
+import net.awazone.awazoneproject.service.serviceInterfaces.user.*;
+import net.awazone.awazoneproject.utility.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.net.HttpHeaders.REFRESH;
 import static java.util.Arrays.stream;
-import static net.awazone.awazoneproject.controller.exception.ResponseMessage.ILLEGAL_USER;
-import static net.awazone.awazoneproject.controller.exception.ResponseMessage.PASSWORD_NOT_MATCH;
-import static net.awazone.awazoneproject.model.userService.TokenType.PASSWORD_RESET;
-import static net.awazone.awazoneproject.model.userService.TokenType.SIGN_UP;
+import static net.awazone.awazoneproject.exception.ResponseMessage.ILLEGAL_USER;
+import static net.awazone.awazoneproject.exception.ResponseMessage.PASSWORD_NOT_MATCH;
+import static net.awazone.awazoneproject.model.user.TokenType.PASSWORD_RESET;
+import static net.awazone.awazoneproject.model.user.TokenType.SIGN_UP;
 import static org.springframework.http.HttpStatus.OK;
 
 @Service
@@ -47,21 +42,25 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private JwtConfig jwtConfig;
-
     private final JwtTokenRepository jwtTokenRepository;
     private final AwazoneUserService awazoneUserService;
 
     private final UserTokenService userTokenService;
     private final UserRoleService userRoleService;
+    private final NotificationService notificationService;
+
+    @Autowired
+    private Utility utility;
 
     public static AuthServiceImpl authService;
 
-    public AuthServiceImpl(AuthRepository authRepository, JwtTokenRepository jwtTokenRepository, AwazoneUserService awazoneUserService, UserTokenService userTokenService, UserRoleService userRoleService) {
+    public AuthServiceImpl(AuthRepository authRepository, JwtTokenRepository jwtTokenRepository, AwazoneUserService awazoneUserService, UserTokenService userTokenService, UserRoleService userRoleService, NotificationService notificationService) {
         this.authRepository = authRepository;
         this.jwtTokenRepository = jwtTokenRepository;
         this.awazoneUserService = awazoneUserService;
         this.userTokenService = userTokenService;
         this.userRoleService = userRoleService;
+        this.notificationService = notificationService;
 
         authService = this;
     }
@@ -73,10 +72,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void passwordReset(String tokenString, PasswordResetModel passwordResetModel) {
+
         UserToken userToken = userTokenService.verifyToken(tokenString, PASSWORD_RESET);
 
-        if(passwordResetModel.getConfirmPassword() != passwordResetModel.getConfirmPassword())
-            throw new PasswordNotMatchException(PASSWORD_NOT_MATCH);
+        if(!Objects.equals(passwordResetModel.getConfirmPassword(), passwordResetModel.getConfirmPassword()))
+            throw new CustomInvalidParamException(PASSWORD_NOT_MATCH);
 
         awazoneUserService.updateUserPassword(userToken, passwordResetModel.getNewPassword());
     }
@@ -91,8 +91,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public UserToken activateUser(String token) {
-        return userTokenService.verifyToken(token, SIGN_UP);
+    public void activateUser(String token) {
+        userTokenService.verifyToken(token, SIGN_UP);
     }
 
     @Override
@@ -103,11 +103,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public List<JwtToken> findByAddress(String address) {
         return jwtTokenRepository.findByRemoteAddress(address);
-    }
-
-    @Override
-    public void resendLink(String userEmail, HttpServletRequest httpServletRequest) {
-
     }
 
     @Override
@@ -124,7 +119,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void getNewToken(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+
         Optional<String> refreshTokenOptional = Optional.ofNullable(httpServletRequest.getHeader(REFRESH));
+
         if(refreshTokenOptional.isPresent()) {
             String refreshToken = refreshTokenOptional.get();
             jwtConfig.createNewTokens(refreshToken);
@@ -144,16 +141,15 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public ResponseMessage activateUser(String username, Set<String> phrases) {
 
-        if(isPhraseValid(phrases)) {
-            AwazoneUser awazoneUser = awazoneUserService.findAppUserByUsername(username);
+        AwazoneUser awazoneUser = awazoneUserService.findAppUserByUsername(username);
 
+        if(isPhraseValid(phrases)) {
             awazoneUser.setAccountNonLocked(true);
             awazoneUser.setAccountNonExpired(true);
             awazoneUser.setEnabled(true);
 
-            return new ResponseMessage("Account activated successfully", OK);
+            return new ResponseMessage("Account activated successfully", OK, null);
         }
-
         throw new IllegalUserException(ILLEGAL_USER);
     }
 
@@ -163,7 +159,7 @@ public class AuthServiceImpl implements AuthService {
             AwazoneUser awazoneUser = awazoneUserService.findAppUserByUsername(username);
             awazoneUserService.updateUserPassword(awazoneUser, passwordResetModel.getNewPassword());
 
-            return new ResponseMessage("Password updated successfully", OK);
+            return new ResponseMessage("Password updated successfully", OK, null);
         }
         throw new IllegalUserException(ILLEGAL_USER);
     }
@@ -174,7 +170,7 @@ public class AuthServiceImpl implements AuthService {
             AwazoneUser awazoneUser = awazoneUserService.findAppUserByUsername(username);
             awazoneUser.setFullName(newFullName);
 
-            return new ResponseMessage("Full name updated successfully", OK);
+            return new ResponseMessage("Full name updated successfully", OK, null);
         }
         throw new IllegalUserException(ILLEGAL_USER);
 
@@ -186,7 +182,7 @@ public class AuthServiceImpl implements AuthService {
             AwazoneUser awazoneUser = awazoneUserService.findAppUserByUsername(username);
             awazoneUser.getAwazoneUserContact().setMobilePhone(newMobilePhone);
 
-            return new ResponseMessage("Mobile phone number updated successfully", OK);
+            return new ResponseMessage("Mobile phone number updated successfully", OK, null);
         }
         throw new IllegalUserException(ILLEGAL_USER);
     }
@@ -203,7 +199,7 @@ public class AuthServiceImpl implements AuthService {
                     .build();
             awazoneUser.setAwazoneUserAddress(awazoneUserAddress);
 
-            return new ResponseMessage("Address updated successfully", OK);
+            return new ResponseMessage("Address updated successfully", OK, null);
 
         }
         throw new IllegalUserException(ILLEGAL_USER);
@@ -218,7 +214,7 @@ public class AuthServiceImpl implements AuthService {
             awazoneUser.setAwazoneUserRole(awazoneUserRole);
         }
 
-        return new ResponseMessage("New admin with role " + roleName + " created!", OK);
+        return new ResponseMessage("New admin with role " + roleName + " created!", OK, null);
     }
 
 

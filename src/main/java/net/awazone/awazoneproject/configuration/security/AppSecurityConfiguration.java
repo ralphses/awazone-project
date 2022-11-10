@@ -52,7 +52,9 @@ public class AppSecurityConfiguration {
                     "/api/v1/aibopay/utility/**",
                     "/api/v1/aibopay/manual/new-manual-payment",
                     "/api/v1/aibopay/manual/get/one/download",
-                    "/api/v1/aibopay/payment/**"
+                    "/api/v1/aibopay/payment/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**"
 //                    "/api/**"
             };
 

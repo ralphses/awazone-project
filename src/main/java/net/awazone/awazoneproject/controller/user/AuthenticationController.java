@@ -1,5 +1,9 @@
 package net.awazone.awazoneproject.controller.user;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.AllArgsConstructor;
 import net.awazone.awazoneproject.exception.ResponseMessage;
 import net.awazone.awazoneproject.model.user.awazoneUser.AwazoneUser;
@@ -19,6 +23,7 @@ import javax.validation.Valid;
 
 import static net.awazone.awazoneproject.exception.ResponseMessage.*;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
 @AllArgsConstructor
@@ -30,6 +35,11 @@ public class AuthenticationController {
     private final Utility utility;
     private final AuthService authService;
 
+    @Operation(summary = "Register a new user", method = "POST")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User registered successfully", content = @Content(mediaType = APPLICATION_JSON_VALUE)),
+            @ApiResponse(responseCode = "400", description = "One or more user info invalid or already exist", content = @Content(mediaType = APPLICATION_JSON_VALUE))
+    })
     @PostMapping(path = "/register")
     public AwazoneUser register(@RequestBody @Valid NewRegistrationRequest newRegistrationRequest,
                                 HttpServletRequest httpServletRequest) {

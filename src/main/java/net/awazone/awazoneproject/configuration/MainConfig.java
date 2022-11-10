@@ -22,6 +22,4 @@ public class MainConfig {
         return new JwtConfig();
     }
 
-
-
 }

@@ -15,7 +15,6 @@ import net.awazone.awazoneproject.repository.user.AwazoneUserRepository;
 import net.awazone.awazoneproject.service.servicesImpl.user.JwtConfig;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -48,30 +47,12 @@ public class AppSecurityConfiguration {
 
     private static final String[] WHITE_LIST_URL =
             {
-                    "/user/refresh",
-                    "/user/register",
-                    "/user/login",
-                    "/user/logout",
-                    "/user/activate",
-                    "/user/reactivate-link",
-                    "/user/password-reset",
-                    "/user/new-password",
+                    "/user/**",
                     "/api/v1/admin/super/activate",
-                    "/api/v1/aibopay/utility/data-bundles",
-                    "/api/v1/aibopay/utility/buy-data",
-                    "/api/v1/aibopay/utility/buy-airtime",
+                    "/api/v1/aibopay/utility/**",
                     "/api/v1/aibopay/manual/new-manual-payment",
                     "/api/v1/aibopay/manual/get/one/download",
-                    "/api/v1/aibopay/payment/card",
-                    "/api/v1/aibopay/payment/status",
-                    "/api/v1/aibopay/payment/initialize",
-                    "/api/v1/aibopay/payment/deposit",
-                    "/api/v1/aibopay/payment/transfer",
-                    "/api/v1/aibopay/payment/get/all-banks",
-                    "/api/v1/aibopay/payment/crypto/{coinType}",
-                    "/api/v1/aibopay/payment/get/payment",
-                    "/api/v1/aibopay/payment/crypto",
-                    "/api/v1/aibopay/payment/transaction/notification"
+                    "/api/v1/aibopay/payment/**"
 //                    "/api/**"
             };
 
@@ -92,9 +73,8 @@ public class AppSecurityConfiguration {
 
                 .authorizeRequests()
                 .antMatchers(WHITE_LIST_URL).permitAll()
-                .antMatchers("/api/**").authenticated()
-                .anyRequest().authenticated()
-                .and()
+                .anyRequest().authenticated().and()
+
                 .logout().logoutUrl("/user/logout")
                 .logoutSuccessHandler(new CustomSuccessLogoutHandler())
                 .deleteCookies();
